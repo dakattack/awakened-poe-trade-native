@@ -6,7 +6,7 @@ import { filterPseudo } from './pseudo'
 import { applyRules as applyAtzoatlRules } from './pseudo/atzoatl-rules'
 import { applyRules as applyMirroredTabletRules } from './pseudo/reflection-rules'
 import { filterItemProp, filterBasePercentile, filterMemoryStrands } from './pseudo/item-property'
-import { mapProps, valdoBadMods } from './pseudo/maps'
+import { mapProps, valdoBadMods, chartProps } from './pseudo/maps'
 import { applyFlaskHybridMod } from './pseudo/flasks'
 import { applyHeistRules } from './pseudo/heist'
 import { decodeOils, applyAnointmentRules } from './pseudo/anointments'
@@ -22,7 +22,7 @@ export interface FiltersCreationContext {
 export function createExactStatFilters (
   item: ParsedItem,
   statsByType: StatCalculated[],
-  opts: { searchStatRange: number }
+  opts: { searchStatRange: number, mode?: 'props' | 'bulk' }
 ): StatFilter[] {
   if (
     item.mapBlighted ||
@@ -40,7 +40,8 @@ export function createExactStatFilters (
     !item.influences.length &&
     !item.isFractured &&
     item.category !== ItemCategory.Tincture &&
-    item.category !== ItemCategory.Idol
+    item.category !== ItemCategory.Idol &&
+    item.category !== ItemCategory.Chart
   ) {
     keepByType.push(ModifierType.Implicit)
   }
@@ -50,6 +51,7 @@ export function createExactStatFilters (
     item.category !== ItemCategory.Map &&
     item.category !== ItemCategory.HeistContract &&
     item.category !== ItemCategory.HeistBlueprint &&
+    item.category !== ItemCategory.Chart &&
     item.category !== ItemCategory.Sentinel
   )) {
     keepByType.push(ModifierType.Explicit)
@@ -66,7 +68,7 @@ export function createExactStatFilters (
 
   const ctx: FiltersCreationContext = {
     item,
-    searchInRange: (item.category !== ItemCategory.Map && item.category !== ItemCategory.Chart)
+    searchInRange: (opts.mode !== 'props')
       ? Math.min(2, opts.searchStatRange)
       : opts.searchStatRange,
     filters: [],
@@ -75,7 +77,8 @@ export function createExactStatFilters (
 
   filterBasePercentile(ctx)
   filterMemoryStrands(ctx)
-  mapProps(ctx)
+  mapProps(opts.mode === 'bulk', ctx)
+  chartProps(opts.mode === 'bulk', ctx)
   valdoBadMods(ctx)
 
   ctx.filters.push(
@@ -236,7 +239,9 @@ export function calculatedStatToFilter (
     if (type !== ModifierType.Enchant) {
       filter.tag = FilterTag.Variant
     }
-    filter.disabled = false
+    if (!filter.oils) {
+      filter.disabled = false
+    }
   }
 
   if (type === ModifierType.Implicit) {
@@ -244,6 +249,8 @@ export function calculatedStatToFilter (
       filter.tag = FilterTag.Corrupted
     } else if (sources.some(s => s.modifier.info.generation === 'eldritch')) {
       filter.tag = FilterTag.Eldritch
+    } else if (sources.some(s => s.modifier.info.generation === 'vestigial')) {
+      filter.tag = FilterTag.Vestigial
     } else if (item.isSynthesised) {
       filter.tag = FilterTag.Synthesised
     }
@@ -465,7 +472,11 @@ function finalFilterTweaks (ctx: FiltersCreationContext) {
         // hide only if fractured mod has corresponding explicit variant
         filter.hidden = 'filters.hide_for_crafting'
       }
-    } else if (filter.tag === FilterTag.Foulborn || filter.tag === FilterTag.Variant) {
+    } else if (
+      filter.tag === FilterTag.Foulborn ||
+      filter.tag === FilterTag.Vestigial ||
+      filter.tag === FilterTag.Variant
+    ) {
       filter.disabled = false
     }
   }
