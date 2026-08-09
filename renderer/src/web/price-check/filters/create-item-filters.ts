@@ -165,18 +165,6 @@ export function createFilters (
         disabled: false
       }
     }
-  } else if (item.category === ItemCategory.Chart) {
-    filters.searchExact = {
-      baseType: item.chart!.type,
-      baseTypeTrade: item.chart!.type
-    }
-    filters.discriminator = {
-      trade: item.chart!.discriminator
-    }
-    filters.chartAreaLevel = {
-      value: item.areaLevel!,
-      disabled: false
-    }
   } else if (item.info.refName === 'Expedition Logbook') {
     filters.searchExact = {
       baseType: item.info.name,
@@ -367,7 +355,6 @@ export function createFilters (
       item.category !== ItemCategory.Jewel && /* https://pathofexile.gamepedia.com/Jewel#Affixes */
       item.category !== ItemCategory.HeistBlueprint &&
       item.category !== ItemCategory.HeistContract &&
-      item.category !== ItemCategory.Chart &&
       item.category !== ItemCategory.MemoryLine &&
       item.category !== ItemCategory.SanctumRelic &&
       item.category !== ItemCategory.Charm &&

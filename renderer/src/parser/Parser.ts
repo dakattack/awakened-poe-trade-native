@@ -282,30 +282,6 @@ function parseMap (section: string[], item: ParsedItem) {
   return isParsed
 }
 
-function parseChart (section: string[], item: ParsedItem) {
-  if (item.category !== ItemCategory.Chart) return 'PARSER_SKIPPED'
-
-  const area = _$.CHART_AREAS[section[0]]
-  if (!area) return 'SECTION_SKIPPED'
-
-  item.chart = {
-    type: area.type,
-    discriminator: area.discriminator
-  }
-
-  for (const line of section.slice(1)) {
-    if (line.startsWith(_$.AREA_LEVEL)) {
-      item.areaLevel = Number(line.slice(_$.AREA_LEVEL.length))
-    } else if (line.startsWith(_$.MAP_ITEM_QUANTITY)) {
-      item.chart.itemQuantity = parseInt(line.slice(_$.MAP_ITEM_QUANTITY.length), 10)
-    } else if (line.startsWith(_$.CHART_SULPHUR)) {
-      item.chart.sulphur = parseInt(line.slice(_$.CHART_SULPHUR.length), 10)
-    }
-  }
-
-  return 'SECTION_PARSED'
-}
-
 function parseBlightedMap (item: ParsedItem) {
   if (item.category !== ItemCategory.Map) return
 
